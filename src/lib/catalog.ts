@@ -64,16 +64,3 @@ export const DEMO_PRODUCTS: DemoProduct[] = [
     icon: "book",
   },
 ];
-
-export const DISBURSEMENT_BANKS = [
-  { code: "BCA", name: "Bank Central Asia (BCA)" },
-  { code: "BNI", name: "Bank Negara Indonesia (BNI)" },
-  { code: "BRI", name: "Bank Rakyat Indonesia (BRI)" },
-  { code: "MANDIRI", name: "Bank Mandiri" },
-  { code: "CIMB", name: "CIMB Niaga" },
-  { code: "PERMATA", name: "Bank Permata" },
-  { code: "BSI", name: "Bank Syariah Indonesia (BSI)" },
-  { code: "DANAMON", name: "Bank Danamon" },
-  { code: "SEABANK", name: "SeaBank Indonesia" },
-  { code: "JAGO", name: "Bank Jago" },
-];

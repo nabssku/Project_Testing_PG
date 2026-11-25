@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ReceiptText,
-  Send,
   ShoppingBag,
   Store,
 } from "lucide-react";
@@ -13,7 +12,6 @@ import { cn } from "@/lib/format";
 const NAV_ITEMS = [
   { href: "/", label: "Belanja", icon: Store },
   { href: "/transactions", label: "Pesanan", icon: ReceiptText },
-  { href: "/disbursements", label: "Payout", icon: Send },
 ];
 
 export function AppHeader() {

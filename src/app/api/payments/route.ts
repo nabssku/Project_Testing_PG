@@ -202,7 +202,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error: "database_error",
-        message: "Gagal memuat riwayat transaksi dari Neon PostgreSQL.",
+        message: "Gagal memuat riwayat pesanan.",
       },
       { status: 500 }
     );

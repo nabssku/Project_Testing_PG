@@ -4,12 +4,11 @@ Aplikasi demo Payment Gateway berbasis **Next.js 16 (App Router, TypeScript, Tai
 
 ## Fitur Utama
 
-- **Checkout Demo (`/`)**: Memilih produk katalog atau nominal kustom, memuat metode pembayaran aktif beserta skema biaya (`percent`, `flat`, `tiers`) secara dinamis dari `GET /api/v1/payment-methods`, mendukung **3 mode integrasi** (*Direct Custom UI*, *Hosted Checkout `pay_url`*, dan *Embed Popup `embed.js`*), serta *Live API Request Payload Preview*.
-- **Instruksi Pembayaran & Simulasi (`/pay/[referenceId]`)**: Menampilkan QR Code QRIS (`qr_string` dengan opsi unduh PNG), nomor Virtual Account (`va_number` + `va_bank`), atau tautan E-Wallet (`checkout_url`), hitung mundur `expires_at`, auto-sync status, tombol **Simulasikan Bayar Lunas (Test Mode)**, pembatalan transaksi, serta struk digital siap cetak saat status `paid`.
-- **Return URL Handler (`/checkout/return`)**: Verifikasi otomatis status pembayaran pasca-redirect dari Hosted Checkout BorderPay.
-- **Dashboard Transaksi & Saldo (`/transactions`)**: Menampilkan saldo live merchant (`GET /api/v1/balance`), ringkasan volume dari Neon PostgreSQL, pencarian/filter status, aksi cepat (Simulasi, Cek Status, Batalkan, Inspeksi JSON), dan sinkronisasi dari `GET /api/v1/payments`.
-- **Webhook Backend Receiver**: Endpoint privat `POST /api/webhooks/borderpay` dengan verifikasi token konstan-waktu (`x-borderpay-token`), idempotency, proteksi status final `paid`, dan penyimpanan ke Neon DB sebelum respons `200 OK`.
-- **Disbursements Playground (`/disbursements`)**: Formulir uji `POST /api/v1/disbursements` dan riwayat `GET /api/v1/disbursements`.
+- **Toko & Checkout (`/`)**: Katalog produk e-commerce dengan keranjang belanja, metode pembayaran dinamis (`GET /api/v1/payment-methods`) untuk QRIS, Virtual Account, dan E-Wallet.
+- **Instruksi Pembayaran (`/pay/[referenceId]`)**: Menampilkan QR Code QRIS (beserta unduh PNG), nomor Virtual Account, atau tautan E-Wallet, hitung mundur batas bayar, tombol simulasi bayar lunas, pembatalan pesanan, dan struk siap cetak.
+- **Return URL Handler (`/checkout/return`)**: Verifikasi otomatis status pembayaran pasca-redirect dari halaman pembayaran BorderPay.
+- **Riwayat Pesanan (`/transactions`)**: Ringkasan pesanan, pencarian/filter status, serta aksi cepat (Bayar simulasi, Perbarui Status, Batalkan).
+- **Webhook Backend Receiver**: Endpoint privat `POST /api/webhooks/borderpay` dengan verifikasi token konstan-waktu (`x-borderpay-token`), idempotency, dan proteksi status final `paid`.
 
 ## Menjalankan Proyek Secara Lokal
 

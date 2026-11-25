@@ -77,8 +77,8 @@ export function CheckoutReturnClient() {
           Memverifikasi Status Pembayaran...
         </h1>
         <p className="text-xs text-[#526071]">
-          Memeriksa status terkini <code className="font-mono-num">{referenceId}</code>{" "}
-          langsung ke BorderPay API dan menyimpannya ke Neon DB.
+          Memeriksa status terkini pesanan{" "}
+          <code className="font-mono-num">{referenceId}</code>...
         </p>
       </div>
     );

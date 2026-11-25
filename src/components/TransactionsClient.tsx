@@ -5,13 +5,11 @@ import { useCallback, useEffect, useState } from "react";
 import {
   AlertCircle,
   CheckCircle2,
-  Code2,
   ExternalLink,
   Loader2,
   Plus,
   RefreshCw,
   Search,
-  Wallet,
   X,
   XCircle,
   Zap,
@@ -23,7 +21,6 @@ import {
   formatIDR,
   getMethodLabel,
 } from "@/lib/format";
-import { JsonInspector } from "./JsonInspector";
 import { StatusBadge } from "./StatusBadge";
 
 interface PaymentSummary {
@@ -38,12 +35,6 @@ interface PaymentSummary {
   totalFees: number;
 }
 
-interface BalanceInfo {
-  available: number;
-  pending: number;
-  currency: string;
-}
-
 const STATUS_TABS = [
   { id: "", label: "Semua" },
   { id: "pending", label: "Menunggu" },
@@ -55,8 +46,6 @@ const STATUS_TABS = [
 export function TransactionsClient() {
   const [rows, setRows] = useState<PaymentRecord[]>([]);
   const [summary, setSummary] = useState<PaymentSummary | null>(null);
-  const [balance, setBalance] = useState<BalanceInfo | null>(null);
-  const [balanceError, setBalanceError] = useState<string | null>(null);
 
   const [statusFilter, setStatusFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,9 +56,6 @@ export function TransactionsClient() {
     type: "success" | "error";
     text: string;
   } | null>(null);
-  const [inspectPayment, setInspectPayment] = useState<PaymentRecord | null>(
-    null
-  );
 
   const loadData = useCallback(
     async (options?: { sync?: boolean }) => {
@@ -82,22 +68,17 @@ export function TransactionsClient() {
         if (searchQuery.trim()) params.set("q", searchQuery.trim());
         if (options?.sync) params.set("sync", "true");
 
-        const [payRes, balRes] = await Promise.all([
-          fetch(`/api/payments?${params.toString()}`, { cache: "no-store" }),
-          fetch("/api/balance", { cache: "no-store" }),
-        ]);
-
+        const payRes = await fetch(`/api/payments?${params.toString()}`, {
+          cache: "no-store",
+        });
         const payData = await payRes.json();
-        const balData = await balRes.json();
 
         if (!payRes.ok) {
-          throw new Error(payData.message || "Gagal memuat transaksi.");
+          throw new Error(payData.message || "Gagal memuat daftar pesanan.");
         }
 
         setRows(payData.payments || []);
         setSummary(payData.summary || null);
-        setBalance(balData.balance || null);
-        setBalanceError(balData.balanceError || null);
 
         if (options?.sync && payData.sync) {
           if (payData.sync.error) {
@@ -105,7 +86,7 @@ export function TransactionsClient() {
           } else {
             setNotice({
               type: "success",
-              text: `Sinkronisasi selesai: memeriksa ${payData.sync.remoteTotal} transaksi BorderPay, ${payData.sync.updatedCount} status diperbarui di Neon DB.`,
+              text: `Sinkronisasi selesai: ${payData.sync.updatedCount} status pesanan diperbarui.`,
             });
           }
         }
@@ -115,7 +96,7 @@ export function TransactionsClient() {
           text:
             err instanceof Error
               ? err.message
-              : "Gagal mengambil data transaksi.",
+              : "Gagal memuat daftar pesanan.",
         });
       } finally {
         setLoading(false);
@@ -159,10 +140,10 @@ export function TransactionsClient() {
         type: "success",
         text:
           action === "simulate"
-            ? `Transaksi ${referenceId} berhasil disimulasikan lunas (paid).`
+            ? `Pesanan ${referenceId} berhasil disimulasikan lunas.`
             : action === "cancel"
-              ? `Transaksi ${referenceId} berhasil dibatalkan (expired).`
-              : `Status ${referenceId} diperbarui: ${data.payment?.status?.toUpperCase()}.`,
+              ? `Pesanan ${referenceId} berhasil dibatalkan.`
+              : `Status pesanan ${referenceId} telah diperbarui.`,
       });
       await loadData();
     } catch (err) {
@@ -181,11 +162,10 @@ export function TransactionsClient() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
-            Riwayat Transaksi & Saldo
+            Riwayat Pesanan
           </h1>
           <p className="text-sm text-[#526071] mt-1">
-            Data transaksi tersimpan di Neon PostgreSQL dan dapat disinkronkan
-            kapan saja dengan BorderPay API.
+            Pantau seluruh daftar pesanan dan status pembayaran Anda.
           </p>
         </div>
 
@@ -196,57 +176,40 @@ export function TransactionsClient() {
             disabled={syncing}
             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-[#E4E8EE] bg-white text-sm font-semibold text-[#0F172A] hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50"
           >
-            <RefreshCw className={cn("h-4 w-4 text-[#1D4ED8]", syncing && "animate-spin")} />
-            <span>Sync BorderPay</span>
+            <RefreshCw
+              className={cn("h-4 w-4 text-[#1D4ED8]", syncing && "animate-spin")}
+            />
+            <span>Perbarui Status</span>
           </button>
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1D4ED8] text-white text-sm font-semibold hover:bg-[#1E40AF] transition-colors"
           >
             <Plus className="h-4 w-4" />
-            <span>Buat Transaksi</span>
+            <span>Belanja Baru</span>
           </Link>
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* Ringkasan Pesanan */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-2xl border border-[#E4E8EE] bg-white p-5 shadow-2xs">
-          <div className="flex items-center justify-between text-xs font-medium text-[#526071]">
-            <span>Saldo Tersedia (Live API)</span>
-            <Wallet className="h-4 w-4 text-[#1D4ED8]" />
-          </div>
+          <div className="text-xs font-medium text-[#526071]">Total Pesanan</div>
           <div className="font-mono-num text-2xl font-bold text-[#0F172A] mt-2">
-            {balance ? formatIDR(balance.available) : "—"}
+            {summary?.totalCount ?? 0}
           </div>
           <div className="text-xs text-[#526071] mt-1">
-            {balance
-              ? `Pending: ${formatIDR(balance.pending)}`
-              : balanceError || "Memuat GET /balance..."}
+            Semua riwayat transaksi
           </div>
         </div>
 
         <div className="rounded-2xl border border-[#E4E8EE] bg-white p-5 shadow-2xs">
-          <div className="text-xs font-medium text-[#526071]">
-            Volume Lunas (Neon DB)
-          </div>
+          <div className="text-xs font-medium text-[#526071]">Pesanan Lunas</div>
           <div className="font-mono-num text-2xl font-bold text-teal-700 mt-2">
             {formatIDR(summary?.paidVolume ?? 0)}
           </div>
           <div className="text-xs text-[#526071] mt-1">
-            {summary?.paidCount ?? 0} dari {summary?.totalCount ?? 0} transaksi lunas
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-[#E4E8EE] bg-white p-5 shadow-2xs">
-          <div className="text-xs font-medium text-[#526071]">
-            Diterima Bersih Merchant
-          </div>
-          <div className="font-mono-num text-2xl font-bold text-[#0F172A] mt-2">
-            {formatIDR(summary?.netMerchantReceives ?? 0)}
-          </div>
-          <div className="text-xs text-[#526071] mt-1">
-            Total biaya kanal: {formatIDR(summary?.totalFees ?? 0)}
+            {summary?.paidCount ?? 0} pesanan selesai dibayar
           </div>
         </div>
 
@@ -258,7 +221,19 @@ export function TransactionsClient() {
             {summary?.pendingCount ?? 0}
           </div>
           <div className="text-xs text-[#526071] mt-1">
-            Nilai pending: {formatIDR(summary?.pendingVolume ?? 0)}
+            Total tertunda: {formatIDR(summary?.pendingVolume ?? 0)}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-[#E4E8EE] bg-white p-5 shadow-2xs">
+          <div className="text-xs font-medium text-[#526071]">
+            Kedaluwarsa / Gagal
+          </div>
+          <div className="font-mono-num text-2xl font-bold text-slate-600 mt-2">
+            {(summary?.expiredCount ?? 0) + (summary?.failedCount ?? 0)}
+          </div>
+          <div className="text-xs text-[#526071] mt-1">
+            Dibatalkan atau melewati batas waktu
           </div>
         </div>
       </div>
@@ -317,7 +292,7 @@ export function TransactionsClient() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari Reference ID, pembeli, item..."
+              placeholder="Cari nomor pesanan, nama, produk..."
               className="w-full rounded-lg border border-[#E4E8EE] bg-[#F7F8FA] pl-9 pr-3 py-1.5 text-sm text-[#0F172A] focus:bg-white focus:outline-none focus:border-[#1D4ED8]"
             />
           </div>
@@ -328,33 +303,33 @@ export function TransactionsClient() {
           {loading ? (
             <div className="py-16 flex items-center justify-center gap-2 text-sm text-[#526071]">
               <Loader2 className="h-5 w-5 animate-spin text-[#1D4ED8]" />
-              <span>Memuat transaksi dari Neon PostgreSQL...</span>
+              <span>Memuat riwayat pesanan...</span>
             </div>
           ) : rows.length === 0 ? (
             <div className="py-16 px-4 text-center space-y-3">
               <div className="text-sm font-semibold text-[#0F172A]">
-                Belum ada transaksi yang cocok
+                Belum ada pesanan yang cocok
               </div>
               <p className="text-xs text-[#526071]">
-                Buat transaksi demo pertama Anda di halaman Checkout Demo untuk
-                melihat alur pembayaran real-time.
+                Mulai pilih produk di halaman toko untuk membuat pesanan pertama
+                Anda.
               </p>
               <Link
                 href="/"
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1D4ED8] text-white text-xs font-semibold hover:bg-[#1E40AF]"
               >
                 <Plus className="h-3.5 w-3.5" />
-                <span>Mulai Checkout Demo</span>
+                <span>Mulai Belanja</span>
               </Link>
             </div>
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#E4E8EE] bg-[#F7F8FA]/80 text-[11px] font-semibold uppercase tracking-wider text-[#526071]">
-                  <th className="py-3 px-4">Reference ID & Item</th>
+                  <th className="py-3 px-4">No. Pesanan & Produk</th>
                   <th className="py-3 px-4">Pembeli</th>
                   <th className="py-3 px-4">Metode</th>
-                  <th className="py-3 px-4 text-right">Nominal / Bersih</th>
+                  <th className="py-3 px-4 text-right">Total</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4">Waktu</th>
                   <th className="py-3 px-4 text-right">Aksi</th>
@@ -375,7 +350,7 @@ export function TransactionsClient() {
                         >
                           {row.referenceId}
                         </Link>
-                        <div className="text-xs text-[#526071] truncate max-w-[220px] mt-0.5">
+                        <div className="text-xs text-[#526071] truncate max-w-[240px] mt-0.5">
                           {row.itemName}
                         </div>
                       </td>
@@ -393,16 +368,10 @@ export function TransactionsClient() {
                         <span className="inline-block px-2 py-0.5 rounded bg-slate-100 text-xs font-semibold text-[#0F172A]">
                           {getMethodLabel(row.method, row.bankCode)}
                         </span>
-                        <div className="text-[10px] uppercase tracking-wider text-[#526071] mt-0.5">
-                          {row.checkoutMode}
-                        </div>
                       </td>
                       <td className="py-3.5 px-4 text-right">
                         <div className="font-mono-num text-xs font-bold text-[#0F172A]">
                           {formatIDR(row.customerPays)}
-                        </div>
-                        <div className="font-mono-num text-[11px] text-teal-700">
-                          Net {formatIDR(row.merchantReceives)}
                         </div>
                       </td>
                       <td className="py-3.5 px-4">
@@ -421,7 +390,7 @@ export function TransactionsClient() {
                           {isPending && row.mode === "test" && (
                             <button
                               type="button"
-                              title="Simulasikan Bayar Lunas (Test Mode)"
+                              title="Simulasikan Bayar Lunas"
                               disabled={busyRef !== null}
                               onClick={() =>
                                 runRowAction(row.referenceId, "simulate")
@@ -433,13 +402,13 @@ export function TransactionsClient() {
                               ) : (
                                 <Zap className="h-3.5 w-3.5" />
                               )}
-                              <span>Simulasi</span>
+                              <span>Bayar</span>
                             </button>
                           )}
 
                           <button
                             type="button"
-                            title="Cek Status dari BorderPay"
+                            title="Perbarui Status"
                             disabled={busyRef !== null}
                             onClick={() =>
                               runRowAction(row.referenceId, "refresh")
@@ -458,7 +427,7 @@ export function TransactionsClient() {
                           {isPending && (
                             <button
                               type="button"
-                              title="Batalkan Transaksi"
+                              title="Batalkan Pesanan"
                               disabled={busyRef !== null}
                               onClick={() =>
                                 runRowAction(row.referenceId, "cancel")
@@ -469,18 +438,9 @@ export function TransactionsClient() {
                             </button>
                           )}
 
-                          <button
-                            type="button"
-                            title="Lihat Raw JSON"
-                            onClick={() => setInspectPayment(row)}
-                            className="p-1.5 rounded-lg border border-[#E4E8EE] bg-white text-[#526071] hover:text-[#0F172A] hover:bg-slate-50 cursor-pointer"
-                          >
-                            <Code2 className="h-3.5 w-3.5" />
-                          </button>
-
                           <Link
                             href={`/pay/${encodeURIComponent(row.referenceId)}`}
-                            title="Buka Halaman Pembayaran"
+                            title="Lihat Detail Pesanan"
                             className="p-1.5 rounded-lg border border-[#E4E8EE] bg-white text-[#1D4ED8] hover:bg-blue-50"
                           >
                             <ExternalLink className="h-3.5 w-3.5" />
@@ -495,43 +455,6 @@ export function TransactionsClient() {
           )}
         </div>
       </div>
-
-      {/* Modal Raw JSON Inspector */}
-      {inspectPayment && (
-        <div
-          className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-[1px] flex items-center justify-center p-4"
-          onClick={() => setInspectPayment(null)}
-        >
-          <div
-            className="w-full max-w-2xl rounded-2xl bg-white border border-[#E4E8EE] shadow-xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="px-5 py-4 border-b border-[#E4E8EE] flex items-center justify-between">
-              <div>
-                <div className="text-xs text-[#526071]">Detail JSON Transaksi</div>
-                <div className="font-mono-num text-sm font-bold text-[#0F172A]">
-                  {inspectPayment.referenceId}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setInspectPayment(null)}
-                className="p-1.5 rounded-lg hover:bg-slate-100 text-[#526071] cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="p-5">
-              <JsonInspector
-                title="Stored BorderPay API Payload"
-                badge={inspectPayment.status.toUpperCase()}
-                data={inspectPayment.rawResponse}
-                maxHeightClass="max-h-[60vh]"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
