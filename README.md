@@ -8,7 +8,7 @@ Aplikasi demo Payment Gateway berbasis **Next.js 16 (App Router, TypeScript, Tai
 - **Instruksi Pembayaran & Simulasi (`/pay/[referenceId]`)**: Menampilkan QR Code QRIS (`qr_string` dengan opsi unduh PNG), nomor Virtual Account (`va_number` + `va_bank`), atau tautan E-Wallet (`checkout_url`), hitung mundur `expires_at`, auto-sync status, tombol **Simulasikan Bayar Lunas (Test Mode)**, pembatalan transaksi, serta struk digital siap cetak saat status `paid`.
 - **Return URL Handler (`/checkout/return`)**: Verifikasi otomatis status pembayaran pasca-redirect dari Hosted Checkout BorderPay.
 - **Dashboard Transaksi & Saldo (`/transactions`)**: Menampilkan saldo live merchant (`GET /api/v1/balance`), ringkasan volume dari Neon PostgreSQL, pencarian/filter status, aksi cepat (Simulasi, Cek Status, Batalkan, Inspeksi JSON), dan sinkronisasi dari `GET /api/v1/payments`.
-- **Webhook Receiver & Inspector (`/webhooks`)**: Endpoint `POST /api/webhooks/borderpay` dengan verifikasi token konstan-waktu (`x-borderpay-token`), idempotency, proteksi status final `paid`, penyimpanan audit di Neon DB sebelum respons `200 OK`, serta simulator webhook lokal.
+- **Webhook Backend Receiver**: Endpoint privat `POST /api/webhooks/borderpay` dengan verifikasi token konstan-waktu (`x-borderpay-token`), idempotency, proteksi status final `paid`, dan penyimpanan ke Neon DB sebelum respons `200 OK`.
 - **Disbursements Playground (`/disbursements`)**: Formulir uji `POST /api/v1/disbursements` dan riwayat `GET /api/v1/disbursements`.
 
 ## Menjalankan Proyek Secara Lokal

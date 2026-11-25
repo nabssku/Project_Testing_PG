@@ -7,14 +7,12 @@ import {
   Send,
   ShoppingBag,
   Store,
-  Webhook,
 } from "lucide-react";
 import { cn } from "@/lib/format";
 
 const NAV_ITEMS = [
   { href: "/", label: "Belanja", icon: Store },
   { href: "/transactions", label: "Pesanan", icon: ReceiptText },
-  { href: "/webhooks", label: "Webhooks", icon: Webhook },
   { href: "/disbursements", label: "Payout", icon: Send },
 ];
 
